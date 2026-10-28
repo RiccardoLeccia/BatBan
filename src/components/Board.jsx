@@ -2,14 +2,14 @@ import { useState } from 'react';
 import TicketCard from './TicketCard';
 import { STATI } from '../utils';
 
-export default function Board({ tickets, onMove, onDelete }) {
+export default function Board({ tickets = [], onMove, onDelete }) {
   const [drag, setDrag] = useState(null);
   const [over, setOver] = useState(null);
 
   return (
     <div className="board">
       {STATI.map((s) => {
-        const lista = tickets
+        const lista = (tickets || [])
           .filter((t) => t.stato === s.id)
           .sort((a, b) => new Date(a.scadenza) - new Date(b.scadenza));
         return (

@@ -20,10 +20,12 @@ function Torta({ fette }) {
   );
 }
 
-export default function Dashboard({ tickets, dipendenti, onNew }) {
+export default function Dashboard({ tickets = [], dipendenti = [], onNew }) {
   const [sel, setSel] = useState(null);
-  const dip = dipendenti.find((d) => d.id === sel);
-  const suoi = dip ? tickets.filter((t) => t.assegnatarioId === dip.id) : [];
+  const safeTickets = Array.isArray(tickets) ? tickets : [];
+  const safeDipendenti = Array.isArray(dipendenti) ? dipendenti : [];
+  const dip = safeDipendenti.find((d) => d.id === sel);
+  const suoi = dip ? safeTickets.filter((t) => t.assegnatarioId === dip.id) : [];
   const aperti = suoi.filter((t) => t.stato !== 'RESOLVED').sort((a, b) => a.oreResidue - b.oreResidue);
   const max = Math.max(24, ...aperti.map((t) => t.oreResidue));
 
@@ -40,8 +42,8 @@ export default function Dashboard({ tickets, dipendenti, onNew }) {
         <div className="head-right"><button type="button" className="btn btn-primary" onClick={onNew}>Nuovo dipendente</button></div>
       </div>
       <div className="people">
-        {dipendenti.map((d) => {
-          const n = tickets.filter((t) => t.assegnatarioId === d.id && t.stato !== 'RESOLVED').length;
+        {safeDipendenti.map((d) => {
+          const n = safeTickets.filter((t) => t.assegnatarioId === d.id && t.stato !== 'RESOLVED').length;
           return (
             <button key={d.id} type="button" className="person" aria-pressed={sel === d.id} onClick={() => setSel(sel === d.id ? null : d.id)}>
               <Avatar nome={d.nome} size={40} />
@@ -61,7 +63,7 @@ export default function Dashboard({ tickets, dipendenti, onNew }) {
             <h2>Ticket da completare ({aperti.length})</h2>
             {aperti.length === 0 && <p className="muted">Nessun ticket aperto.</p>}
             {aperti.map((t) => {
-              const c = PRIO[t.priorita].color;
+              const c = PRIO[t.priorita]?.color || '#3b82f6';
               return (
                 <div className="bar-row" key={t.id}>
                   <div className="bar-label"><span>HD-{t.id} {t.titolo}</span><span style={{ color: t.slaScaduto ? c : undefined }}>{residuo(t)}</span></div>

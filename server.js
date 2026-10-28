@@ -1,7 +1,17 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
+
+// Middleware di Sicurezza OAuth2 e Permessi (GRANT)
+const verifyToken = require('./middleware/authJWT');
+const checkGrant = require('./middleware/checkGrant');
+
+// Configurazione Swagger UI
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +19,11 @@ const ORA = 3600000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serviamo la documentazione Swagger UI su /api-docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 const CATEGORIE = ['CRITICAL_BUG', 'SOFTWARE_BUG', 'SECURITY', 'CONFIGURAZIONE'];
 const STATI = ['NEW', 'IN_PROGRESS', 'WAITING', 'RESOLVED'];
@@ -20,7 +34,8 @@ const salva = (f, d) => fs.writeFileSync(path.join(__dirname, 'data', f), JSON.s
 
 const dipendenti = leggi('dipendenti.json');
 let tickets = leggi('tickets.json');
-// Gli id devono essere univoci: se il file è incoerente il server non parte
+
+// Gli id devono essere univoci
 function verificaIdUnivoci(lista, nome) {
   const visti = new Set();
   for (const el of lista) {
@@ -39,13 +54,14 @@ const norm = (v) => pulisci(v).toLowerCase();
 
 let nextId = tickets.reduce((m, t) => Math.max(m, t.id), 0) + 1;
 
-// Priorità e SLA sono calcolati ad ogni richiesta con l'ora locale del server
+// Priorità e SLA calcolati ad ogni richiesta
 function calcola(t) {
   const ore = (new Date(t.scadenza).getTime() - Date.now()) / ORA;
   const priorita = ore <= 8 ? 'ALTA' : ore <= 24 ? 'MEDIA' : 'BASSA';
   const d = dipendenti.find((x) => x.id === t.assegnatarioId);
   return {
-    ...t, priorita,
+    ...t, 
+    priorita,
     assegnatario: d ? d.nome : 'Non assegnato',
     oreResidue: Math.round(ore * 100) / 100,
     slaScaduto: t.stato !== 'RESOLVED' && ore < 0
@@ -55,10 +71,67 @@ function calcola(t) {
 const trovaIndice = (req) => tickets.findIndex((t) => t.id === parseInt(req.params.id, 10));
 const nonTrovato = (res, req) => res.status(404).json({ error: `Ticket ${req.params.id} non trovato.` });
 
-app.get('/api/dipendenti', (req, res) => res.json(dipendenti));
+// ===================================================
+// 1. ENDPOINT OAUTH 2.0 (Password Credentials Grant)
+// ===================================================
+app.post('/api/login', (req, res) => {
+  const username = req.body?.username ?? req.query?.username;
+  const password = req.body?.password ?? req.query?.password;
+  const grantType = req.body?.grant_type ?? req.query?.grant_type;
+  const requestedScope = req.body?.scope ?? req.query?.scope ?? 'helpdesk.read helpdesk.write helpdesk.admin';
 
-// L'id è sempre assegnato dal server. Gli omonimi sono ammessi solo con specializzazione diversa.
-app.post('/api/dipendenti', (req, res) => {
+  // Verifica grant_type conforme allo standard OAuth 2.0
+  if (!grantType || grantType !== 'password') {
+    return res.status(400).json({
+      error: 'unsupported_grant_type',
+      error_description: "Grant type non supportato. È richiesto grant_type='password'."
+    });
+  }
+
+  // Verifica presenza credenziali
+  if (!username || !password) {
+    return res.status(400).json({
+      error: 'invalid_request',
+      error_description: 'Parametri username e password obbligatori.'
+    });
+  }
+
+  // Chiave segreta per la firma del token (da .env o fallback di test)
+  const secretKey = process.env.JWT_SECRET || 'helpdesk_super_secret_key_test_2026_b2b';
+
+  const scopesArray = typeof requestedScope === 'string' 
+    ? requestedScope.trim().split(/\s+/) 
+    : (Array.isArray(requestedScope) ? requestedScope : ['helpdesk.read']);
+
+  const payload = {
+    sub: username,
+    username: username,
+    scope: scopesArray.join(' '),
+    permissions: scopesArray,
+    grant_type: 'password',
+    roles: scopesArray.includes('helpdesk.admin') ? ['admin'] : ['user'],
+    iat: Math.floor(Date.now() / 1000)
+  };
+
+  const token = jwt.sign(payload, secretKey, { expiresIn: '8h' });
+
+  return res.json({
+    access_token: token,
+    token_type: 'Bearer',
+    expires_in: 28800,
+    scope: payload.scope
+  });
+});
+
+// ===================================================
+// ROTTE DIPENDENTI (Protette con OAuth2)
+// ===================================================
+
+app.get('/api/dipendenti', verifyToken, checkGrant(['helpdesk.read']), (req, res) => {
+  res.json(dipendenti);
+});
+
+app.post('/api/dipendenti', verifyToken, checkGrant(['helpdesk.write']), (req, res) => {
   const nome = pulisci(req.body.nome);
   const specializzazione = pulisci(req.body.specializzazione);
   if (nome.length < 3 || specializzazione.length < 2) {
@@ -73,7 +146,11 @@ app.post('/api/dipendenti', (req, res) => {
   res.status(201).json(nuovo);
 });
 
-app.get('/api/tickets', (req, res) => {
+// ===================================================
+// ROTTE TICKETS (Protette con OAuth2 & Permessi GRANT)
+// ===================================================
+
+app.get('/api/tickets', verifyToken, checkGrant(['helpdesk.read']), (req, res) => {
   const { cliente, assegnatarioId } = req.query;
   let out = tickets;
   if (cliente) out = out.filter((t) => t.cliente.toLowerCase() === cliente.trim().toLowerCase());
@@ -81,13 +158,13 @@ app.get('/api/tickets', (req, res) => {
   res.json(out.map(calcola));
 });
 
-app.get('/api/tickets/:id', (req, res) => {
+app.get('/api/tickets/:id', verifyToken, checkGrant(['helpdesk.read']), (req, res) => {
   const i = trovaIndice(req);
   if (i < 0) return nonTrovato(res, req);
   res.json(calcola(tickets[i]));
 });
 
-app.post('/api/tickets', (req, res) => {
+app.post('/api/tickets', verifyToken, checkGrant(['helpdesk.write']), (req, res) => {
   const { titolo, descrizione, cliente, categoria, assegnatarioId, scadenza } = req.body;
   if (![titolo, descrizione, cliente, categoria, assegnatarioId, scadenza].every((v) => v && String(v).trim())) {
     return res.status(400).json({ error: 'Compila tutti i campi, scadenza compresa.' });
@@ -116,7 +193,7 @@ app.post('/api/tickets', (req, res) => {
   res.status(201).json(calcola(nuovo));
 });
 
-app.patch('/api/tickets/:id', (req, res) => {
+app.patch('/api/tickets/:id', verifyToken, checkGrant(['helpdesk.write']), (req, res) => {
   const i = trovaIndice(req);
   if (i < 0) return nonTrovato(res, req);
   const { stato, scadenza } = req.body;
@@ -132,7 +209,7 @@ app.patch('/api/tickets/:id', (req, res) => {
   res.json(calcola(tickets[i]));
 });
 
-app.delete('/api/tickets/:id', (req, res) => {
+app.delete('/api/tickets/:id', verifyToken, checkGrant(['helpdesk.admin']), (req, res) => {
   const i = trovaIndice(req);
   if (i < 0) return nonTrovato(res, req);
   tickets.splice(i, 1);

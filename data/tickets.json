@@ -141,5 +141,16 @@
     "assegnatarioId": 8,
     "createdAt": "2026-10-28T11:55:47.807Z",
     "scadenza": "2026-10-28T17:52:00.000Z"
+  },
+  {
+    "id": 14,
+    "titolo": "Errore nell'autentificazione",
+    "descrizione": "Il programma non esegue l'autentificazione al server e per tanto il fornt end risulta vuoto",
+    "cliente": "Zucchetti",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "WAITING",
+    "assegnatarioId": 7,
+    "createdAt": "2026-10-28T17:13:25.898Z",
+    "scadenza": "2026-10-28T22:17:00.000Z"
   }
 ]

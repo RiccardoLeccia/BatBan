@@ -6,10 +6,12 @@ import Board from './components/Board';
 import TicketModal from './components/TicketModal';
 import DipendenteModal from './components/DipendenteModal';
 import Feedback from './components/Feedback';
+import LoginModal from './components/LoginModal';
 import Dashboard from './pages/Dashboard';
 import { api } from './utils';
 
 export default function App() {
+  const [token, setToken] = useState(() => localStorage.getItem('access_token') || '');
   const [tickets, setTickets] = useState([]);
   const [dipendenti, setDipendenti] = useState([]);
   const [cliente, setCliente] = useState('');
@@ -24,36 +26,87 @@ export default function App() {
     setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3500);
   }, []);
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('access_token');
+    setToken('');
+    setTickets([]);
+    setDipendenti([]);
+  }, []);
+
+  const handleLogin = (newToken) => {
+    localStorage.setItem('access_token', newToken);
+    setToken(newToken);
+    notify('Accesso autorizzato con successo');
+  };
+
   const load = useCallback(
-    () => api('/tickets').then(setTickets).catch((e) => notify(e.message, 'err')),
-    [notify]
+    () => {
+      if (!token) return Promise.resolve();
+      return api('/tickets')
+        .then(setTickets)
+        .catch((e) => {
+          notify(e.message, 'err');
+          if (e.message.includes('401') || e.message.includes('403') || e.message.includes('Accesso negato')) {
+            handleLogout();
+          }
+        });
+    },
+    [token, notify, handleLogout]
   );
+
   const loadDip = useCallback(
-    () => api('/dipendenti').then(setDipendenti).catch((e) => notify(e.message, 'err')),
-    [notify]
+    () => {
+      if (!token) return Promise.resolve();
+      return api('/dipendenti')
+        .then(setDipendenti)
+        .catch((e) => {
+          notify(e.message, 'err');
+          if (e.message.includes('401') || e.message.includes('403') || e.message.includes('Accesso negato')) {
+            handleLogout();
+          }
+        });
+    },
+    [token, notify, handleLogout]
   );
 
   useEffect(() => {
+    if (!token) return;
     load();
     const i = setInterval(load, 60000);
     return () => clearInterval(i);
-  }, [load]);
+  }, [token, load]);
 
-  useEffect(() => { loadDip(); }, [loadDip]);
+  useEffect(() => {
+    if (token) {
+      loadDip();
+    }
+  }, [token, loadDip]);
 
-  const clienti = useMemo(() => [...new Set(tickets.map((t) => t.cliente))].sort(), [tickets]);
+  const clienti = useMemo(() => {
+    if (!Array.isArray(tickets)) return [];
+    return [...new Set(tickets.map((t) => t.cliente).filter(Boolean))].sort();
+  }, [tickets]);
+
   const visibili = cliente ? tickets.filter((t) => t.cliente === cliente) : tickets;
 
   const crea = async (dati) => {
-    const t = await api('/tickets', { method: 'POST', body: JSON.stringify(dati) });
-    notify(`Ticket HD-${t.id} creato`);
-    load();
+    try {
+      const t = await api('/tickets', { method: 'POST', body: JSON.stringify(dati) });
+      notify(`Ticket HD-${t.id} creato`);
+      load();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
   };
 
   const creaDip = async (dati) => {
-    const d = await api('/dipendenti', { method: 'POST', body: JSON.stringify(dati) });
-    notify(`${d.nome} aggiunto ai dipendenti`);
-    loadDip();
+    try {
+      const d = await api('/dipendenti', { method: 'POST', body: JSON.stringify(dati) });
+      notify(`${d.nome} aggiunto ai dipendenti`);
+      loadDip();
+    } catch (e) {
+      notify(e.message, 'err');
+    }
   };
 
   const sposta = async (id, stato) => {
@@ -78,10 +131,20 @@ export default function App() {
     load();
   };
 
+  // Se l'utente non è autenticato, mostra solo la schermata di Login / Autorizzazione
+  if (!token) {
+    return (
+      <>
+        <LoginModal onLogin={handleLogin} />
+        <Feedback toasts={toasts} conferma={conferma} onCancel={() => setConferma(null)} onConfirm={() => {}} />
+      </>
+    );
+  }
+
   return (
     <BrowserRouter>
       <div className="shell">
-        <Header />
+        <Header onLogout={handleLogout} />
         <main className="main">
           <Routes>
             <Route path="/" element={<Navigate to="/board" replace />} />

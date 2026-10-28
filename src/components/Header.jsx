@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
 
-export default function Header({ onNavigate }) {
+export default function Header({ onNavigate, onLogout }) {
   return (
     <aside className="sidebar" aria-label="Menu principale">
       <div className="brand">
@@ -26,6 +26,26 @@ export default function Header({ onNavigate }) {
           <span className="nav-icon">👥</span>
           <span className="nav-text">Dipendenti</span>
         </NavLink>
+
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="nav-item"
+            style={{
+              background: 'none',
+              border: 'none',
+              width: '100%',
+              textAlign: 'left',
+              cursor: 'pointer',
+              marginTop: '1.5rem',
+              color: '#ef4444'
+            }}
+          >
+            <span className="nav-icon">🚪</span>
+            <span className="nav-text">Logout</span>
+          </button>
+        )}
       </nav>
     </aside>
   );

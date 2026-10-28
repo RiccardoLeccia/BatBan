@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio: Basic Authentication</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; padding: 40px 20px; }
+        .card { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 30px; }
+        h2 { color: #1e293b; margin-bottom: 8px; font-size: 24px; }
+        .subtitle { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #475569; }
+        input { width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        .endpoint-box { background-color: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; margin-bottom: 20px; color: #334155; }
+        .badge { background: #3b82f6; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 5px; }
+        button { width: 100%; background-color: #1e293b; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0f172a; }
+        .console-container { margin-top: 25px; }
+        .console-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 14px; font-weight: 600; color: #475569; }
+        pre { background-color: #0f172a; color: #38bdf8; padding: 16px; border-radius: 8px; overflow-x: auto; max-height: 250px; font-family: 'Courier New', Courier, monospace; font-size: 13px; border: 1px solid #1e293b; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Esercitazione: Basic Authentication</h2>
+    <div class="subtitle">Invia le credenziali codificate in Base64 direttamente nell'Header HTTP.</div>
+
+    <div class="endpoint-box">
+        <span class="badge">GET</span> https://idp.zucchettitest.it/identity_provider
+    </div>
+
+    <div class="form-group">
+        <label for="username">Username / Client ID</label>
+        <input type="text" id="username" placeholder="Inserisci lo username">
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password / Client Secret</label>
+        <input type="password" id="password" placeholder="Inserisci la password">
+    </div>
+
+    <button id="btnFetch">Invia Richiesta Autenticata</button>
+
+    <div class="console-container">
+        <div class="console-header">
+            <span>Console di Debug (Risposta API)</span>
+            <span id="status-code" style="font-family: monospace;">-</span>
+        </div>
+        <pre id="output">// I risultati della chiamata compariranno qui...</pre>
+    </div>
+</div>
+
+<script>
+    document.getElementById('btnFetch').addEventListener('click', async () => {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        const output = document.getElementById('output');
+        const statusBox = document.getElementById('status-code');
+
+        if (!user || !pass) {
+            alert("Per favore, inserisci sia lo username che la password.");
+            return;
+        }
+
+        output.textContent = "Generazione header e invio richiesta in corso...";
+        statusBox.textContent = "-";
+
+        // 1. Codifica le credenziali in stringa Base64 standard (formato user:password)
+        const credentials = btoa(`${user}:${pass}`);
+
+        try {
+            const response = await fetch("https://idp.zucchettitest.it/identity_provider/api/Articoli", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Basic ${credentials}`
+                }
+            });
+
+            statusBox.textContent = `HTTP ${response.status}`;
+            
+            if (!response.ok) {
+                const errText = await response.text();
+                output.textContent = `Errore di Autenticazione (Stato ${response.status}):\n${errText}`;
+                return;
+            }
+
+            const data = await response.json();
+            output.textContent = JSON.stringify(data, null, 2);
+
+        } catch (error) {
+            output.textContent = `Errore di rete o blocco CORS:\n${error.message}`;
+        }
+    });
+</script>
+
+</body>
+</html>
+
