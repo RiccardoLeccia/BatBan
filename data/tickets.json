@@ -1,0 +1,145 @@
+[
+  {
+    "id": 1,
+    "titolo": "Errore 500 su endpoint checkout",
+    "descrizione": "Il gateway di pagamento restituisce HTTP 500 al completamento dell'ordine.",
+    "cliente": "Axiom Global SpA",
+    "categoria": "CRITICAL_BUG",
+    "stato": "RESOLVED",
+    "assegnatarioId": 1,
+    "createdAt": "2026-10-28T08:47:52.175Z",
+    "scadenza": "2026-10-28T10:47:52.175Z"
+  },
+  {
+    "id": 2,
+    "titolo": "Certificato TLS in scadenza sul gateway API",
+    "descrizione": "Rinnovare il certificato wildcard prima della scadenza per non interrompere i webhook bancari.",
+    "cliente": "FinTech Bank Corp",
+    "categoria": "SECURITY",
+    "stato": "RESOLVED",
+    "assegnatarioId": 2,
+    "createdAt": "2026-10-28T10:47:52.175Z",
+    "scadenza": "2026-10-28T13:17:52.175Z"
+  },
+  {
+    "id": 3,
+    "titolo": "Caricamento lento del catalogo prodotti",
+    "descrizione": "Le ricerche per taglia e colore impiegano in media più di 4 secondi.",
+    "cliente": "Apex Store",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "NEW",
+    "assegnatarioId": 3,
+    "createdAt": "2026-10-28T11:05:52.175Z",
+    "scadenza": "2026-10-28T17:47:52.175Z"
+  },
+  {
+    "id": 4,
+    "titolo": "Configurazione webhook di spedizione",
+    "descrizione": "In attesa delle chiavi API di collaudo da parte del cliente per testare i callback di consegna.",
+    "cliente": "Nexus Logistics",
+    "categoria": "CONFIGURAZIONE",
+    "stato": "WAITING",
+    "assegnatarioId": 4,
+    "createdAt": "2026-10-28T07:47:52.175Z",
+    "scadenza": "2026-10-28T23:47:52.175Z"
+  },
+  {
+    "id": 5,
+    "titolo": "Nuovo indirizzo per i report mensili",
+    "descrizione": "Aggiornata la configurazione SMTP con il nuovo indirizzo del CFO.",
+    "cliente": "Axiom Global SpA",
+    "categoria": "CONFIGURAZIONE",
+    "stato": "RESOLVED",
+    "assegnatarioId": 1,
+    "createdAt": "2026-10-27T09:47:52.175Z",
+    "scadenza": "2026-10-28T09:47:52.175Z"
+  },
+  {
+    "id": 6,
+    "titolo": "Riconciliazione notturna non completata",
+    "descrizione": "Il batch di quadratura si è fermato per un errore di connessione al database secondario.",
+    "cliente": "FinTech Bank Corp",
+    "categoria": "CRITICAL_BUG",
+    "stato": "NEW",
+    "assegnatarioId": 6,
+    "createdAt": "2026-10-28T11:32:52.175Z",
+    "scadenza": "2026-10-28T13:35:52.175Z"
+  },
+  {
+    "id": 7,
+    "titolo": "Export ordini con date errate",
+    "descrizione": "Nel CSV gli ordini dopo le 22:00 risultano con la data del giorno successivo.",
+    "cliente": "Apex Store",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "IN_PROGRESS",
+    "assegnatarioId": 3,
+    "createdAt": "2026-10-28T06:47:52.175Z",
+    "scadenza": "2026-10-29T17:47:52.175Z"
+  },
+  {
+    "id": 8,
+    "titolo": "Accessi anomali al pannello vettori",
+    "descrizione": "Rilevati tentativi di login ripetuti da indirizzi non riconosciuti.",
+    "cliente": "Nexus Logistics",
+    "categoria": "SECURITY",
+    "stato": "WAITING",
+    "assegnatarioId": 2,
+    "createdAt": "2026-10-28T09:47:52.175Z",
+    "scadenza": "2026-10-29T07:47:52.175Z"
+  },
+  {
+    "id": 9,
+    "titolo": "Limite di rate sulle API partner",
+    "descrizione": "Il cliente chiede di alzare il limite a 600 richieste al minuto.",
+    "cliente": "Axiom Global SpA",
+    "categoria": "CONFIGURAZIONE",
+    "stato": "IN_PROGRESS",
+    "assegnatarioId": 1,
+    "createdAt": "2026-10-28T10:47:52.175Z",
+    "scadenza": "2026-10-28T16:47:52.175Z"
+  },
+  {
+    "id": 10,
+    "titolo": "Layout rotto su tablet nel carrello",
+    "descrizione": "Il riepilogo ordine si sovrappone al pulsante di pagamento sotto i 900 px.",
+    "cliente": "Apex Store",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "NEW",
+    "assegnatarioId": 4,
+    "createdAt": "2026-10-28T10:17:52.175Z",
+    "scadenza": "2026-10-30T03:47:52.175Z"
+  },
+  {
+    "id": 11,
+    "titolo": "Test di regressione sul modulo fatture",
+    "descrizione": "Verificare i calcoli IVA dopo l'ultimo rilascio.",
+    "cliente": "FinTech Bank Corp",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "IN_PROGRESS",
+    "assegnatarioId": 5,
+    "createdAt": "2026-10-28T05:47:52.175Z",
+    "scadenza": "2026-10-28T20:47:52.175Z"
+  },
+  {
+    "id": 12,
+    "titolo": "Migrazione indici database ordini",
+    "descrizione": "Ricostruire gli indici della tabella ordini fuori dagli orari di picco.",
+    "cliente": "Nexus Logistics",
+    "categoria": "CONFIGURAZIONE",
+    "stato": "NEW",
+    "assegnatarioId": 6,
+    "createdAt": "2026-10-28T09:47:52.175Z",
+    "scadenza": "2026-10-30T15:47:52.175Z"
+  },
+  {
+    "id": 13,
+    "titolo": "Errore con l'apprendimento dell'AI aziendale",
+    "descrizione": "Durante l'apprendimento del modello di AI aziendale di Zucchetti",
+    "cliente": "Zucchetti",
+    "categoria": "SOFTWARE_BUG",
+    "stato": "NEW",
+    "assegnatarioId": 8,
+    "createdAt": "2026-10-28T11:55:47.807Z",
+    "scadenza": "2026-10-28T17:52:00.000Z"
+  }
+]

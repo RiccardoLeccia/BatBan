@@ -1,141 +1,38 @@
-import React, { useState } from 'react';
+import { STATI, PRIO, CATEGORIE, fmtData, residuo } from '../utils';
+import Avatar from './Avatar';
+import PrioIcon from './PrioIcon';
 
-const SLA_HOURS = {
-  ALTA: 2,
-  MEDIA: 8,
-  BASSA: 24
-};
-
-const KANBAN_STATES = ['NEW', 'IN_PROGRESS', 'WAITING', 'RESOLVED'];
-
-export default function TicketCard({
-  ticket,
-  onMove,
-  onDelete,
-  onDragStart,
-  onDragEnd,
-  isBeingDragged
-}) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Verifica Scadenza SLA per Priorità ALTA in stato NEW
-  const isSlaExpired = (() => {
-    if (ticket.stato !== 'NEW' || ticket.priorita !== 'ALTA' || !ticket.createdAt) {
-      return false;
-    }
-    const createdTimestamp = new Date(ticket.createdAt).getTime();
-    if (isNaN(createdTimestamp)) return false;
-    const diffHours = (Date.now() - createdTimestamp) / (1000 * 60 * 60);
-    return diffHours >= SLA_HOURS.ALTA;
-  })();
-
-  const stateIndex = KANBAN_STATES.indexOf(ticket.stato);
-  const canMoveBack = stateIndex > 0;
-  const canMoveForward = stateIndex < KANBAN_STATES.length - 1;
-  const prevState = canMoveBack ? KANBAN_STATES[stateIndex - 1] : null;
-  const nextState = canMoveForward ? KANBAN_STATES[stateIndex + 1] : null;
-
-  const priorityBadgeClass = `badge-${ticket.priorita.toLowerCase()}`;
-  const priorityHours = SLA_HOURS[ticket.priorita] || 24;
-
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData('text/plain', String(ticket.id));
-    e.dataTransfer.effectAllowed = 'move';
-    if (onDragStart) {
-      onDragStart(ticket);
-    }
-  };
-
-  const handleDragEnd = (e) => {
-    if (onDragEnd) {
-      onDragEnd();
-    }
-  };
-
-  const handleDelete = () => {
-    const confirmDelete = window.confirm(
-      `Sei sicuro di voler eliminare il ticket #${ticket.id}: "${ticket.titolo}"?`
-    );
-    if (confirmDelete) {
-      setIsDeleting(true);
-      onDelete(ticket.id);
-    }
-  };
+export default function TicketCard({ ticket: t, dragging, onDragStart, onDragEnd, onMove, onDelete }) {
+  const i = STATI.findIndex((s) => s.id === t.stato);
 
   return (
     <article
-      className={`ticket-card ${isSlaExpired ? 'sla-expired' : ''} ${
-        isBeingDragged ? 'is-dragging' : ''
-      }`}
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      data-id={ticket.id}
-      title="Trascina con il mouse per spostare questa card in un'altra colonna"
+      className={`card ${t.slaScaduto ? 'sla-scaduto' : ''} ${dragging ? 'dragging' : ''}`}
+      draggable
+      onDragStart={(e) => { e.dataTransfer.setData('text/plain', String(t.id)); onDragStart(); }}
+      onDragEnd={onDragEnd}
     >
-      {/* Header Card: Cliente B2B + Badge Priorità Semantico */}
-      <div className="card-header">
-        <div className="client-name" title="Cliente B2B">
-          <span className="client-icon">🏢</span>
-          <span>{ticket.cliente}</span>
-        </div>
-        <span
-          className={`sla-badge ${priorityBadgeClass}`}
-          title={`SLA Scadenza: ${priorityHours} ore`}
-        >
-          {ticket.priorita} ({priorityHours}h)
-        </span>
+      <h3>{t.titolo}</h3>
+      <p className="desc">{t.descrizione}</p>
+      <div className="chips">
+        <span className="chip" data-cat={t.categoria}>{CATEGORIE[t.categoria]}</span>
+        <span className="cliente">{t.cliente}</span>
       </div>
-
-      {/* Alert Grafico SLA Scaduto (Bordo rosso lampeggiante + banner) */}
-      {isSlaExpired && (
-        <div className="sla-alert-banner" role="alert">
-          <span>⚠️</span>
-          <span>SLA SCADUTO! Ticket bloccato in NEW &gt; 2h</span>
-        </div>
-      )}
-
-      {/* Corpo Card: Titolo + Descrizione */}
-      <div className="card-body">
-        <h4 className="ticket-title">{ticket.titolo}</h4>
-        <p className="ticket-desc">{ticket.descrizione}</p>
+      <div className={`scadenza ${t.slaScaduto ? 'late' : ''}`}>
+        <span>{t.slaScaduto ? 'SLA scaduto' : fmtData(t.scadenza)}</span>
+        <span>{residuo(t)}</span>
       </div>
-
-      {/* Footer Card: Categoria & Tecnico + Pulsanti Azione */}
-      <div className="card-footer">
-        <div className="meta-info">
-          <span className="meta-category">{ticket.categoria}</span>
-          <span className="meta-assignee">👤 {ticket.assegnatario}</span>
-        </div>
-
-        <div className="card-actions">
-          <button
-            type="button"
-            className="action-btn btn-prev"
-            disabled={!canMoveBack}
-            onClick={() => canMoveBack && onMove(ticket.id, prevState)}
-            title={canMoveBack ? `Arretra a ${prevState}` : 'Inizio flusso'}
-          >
-            &lt;
-          </button>
-          <button
-            type="button"
-            className="action-btn btn-next"
-            disabled={!canMoveForward}
-            onClick={() => canMoveForward && onMove(ticket.id, nextState)}
-            title={canMoveForward ? `Avanza a ${nextState}` : 'Completato'}
-          >
-            &gt;
-          </button>
-          <button
-            type="button"
-            className="action-btn btn-delete"
-            disabled={isDeleting}
-            onClick={handleDelete}
-            title="Elimina ticket"
-          >
-            🗑️
-          </button>
+      <div className="card-foot">
+        <div className="foot-left"><span className="key">HD-{t.id}</span><PrioIcon p={t.priorita} /></div>
+        <div className="foot-right">
+          <div className="actions">
+            <button type="button" aria-label="Sposta indietro" disabled={i === 0} onClick={() => onMove(t.id, STATI[i - 1].id)}>&lsaquo;</button>
+            <button type="button" aria-label="Sposta avanti" disabled={i === STATI.length - 1} onClick={() => onMove(t.id, STATI[i + 1].id)}>&rsaquo;</button>
+            <button type="button" aria-label="Elimina ticket" className="danger" onClick={() => onDelete(t)}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+            </button>
+          </div>
+          <Avatar nome={t.assegnatario} />
         </div>
       </div>
     </article>

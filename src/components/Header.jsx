@@ -1,28 +1,32 @@
-import React from 'react';
+import { NavLink } from 'react-router-dom';
+import Logo from './Logo';
 
-export default function Header() {
+export default function Header({ onNavigate }) {
   return (
-    <header className="app-header">
-      <div className="header-container">
-        <div className="brand">
-          <span className="brand-badge">B2B ENTERPRISE • REACT</span>
-          <h1>Helpdesk & SLA Kanban Board</h1>
-          <p className="subtitle">
-            Trascina con il mouse le card tra le colonne e gestisci i ticket direttamente dalla board
-          </p>
+    <aside className="sidebar" aria-label="Menu principale">
+      <div className="brand">
+        <div className="brand-logo">
+          <Logo />
         </div>
-        <div className="header-sla-legend">
-          <span className="legend-item">
-            <span className="dot dot-alta"></span> ALTA (2h)
-          </span>
-          <span className="legend-item">
-            <span className="dot dot-media"></span> MEDIA (8h)
-          </span>
-          <span className="legend-item">
-            <span className="dot dot-bassa"></span> BASSA (24h)
-          </span>
+        <div className="brand-text">
+          <b>Batban</b>
+          <small>Gestionale progetti</small>
         </div>
       </div>
-    </header>
+
+      <nav className="nav">
+        <span className="nav-title">Area di lavoro</span>
+        
+        <NavLink to="/board" onClick={onNavigate} className="nav-item">
+          <span className="nav-icon">📋</span>
+          <span className="nav-text">Board</span>
+        </NavLink>
+
+        <NavLink to="/dipendenti" onClick={onNavigate} className="nav-item">
+          <span className="nav-icon">👥</span>
+          <span className="nav-text">Dipendenti</span>
+        </NavLink>
+      </nav>
+    </aside>
   );
 }

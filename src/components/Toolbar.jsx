@@ -1,58 +1,28 @@
-import React from 'react';
+import { PRIO } from '../utils';
+import PrioIcon from './PrioIcon';
 
-export default function Toolbar({
-  clients,
-  selectedClient,
-  onClientChange,
-  onResetFilter,
-  totalCount,
-  onOpenCreateModal
-}) {
+export default function Toolbar({ clienti, cliente, onChange, totale, onNew }) {
   return (
-    <section className="toolbar-panel">
-      <div className="filter-panel panel-card">
-        <div className="filter-header">
-          <div className="filter-title-group">
-            <h3>Filtro Clienti B2B</h3>
-            <span className="filter-count" id="total-tickets-count">
-              Totale: {totalCount} ticket
-            </span>
+    <>
+      <div className="page-head">
+        <div><h1 className="title">Board</h1><p className="muted">Ticket di assistenza per cliente</p></div>
+        <div className="head-right">
+          <button type="button" className="btn btn-primary" onClick={onNew}>Nuovo ticket</button>
+          <div className="legend">
+            {Object.entries(PRIO).map(([k, v]) => <span key={k}><PrioIcon p={k} />{v.label}, {v.soglia}</span>)}
           </div>
-          <button
-            type="button"
-            className="btn btn-primary btn-sm btn-create-top"
-            onClick={onOpenCreateModal}
-          >
-            <span className="btn-icon">＋</span> Nuovo Ticket
-          </button>
-        </div>
-
-        <div className="filter-controls">
-          <div className="select-wrapper">
-            <select
-              id="filter-cliente"
-              value={selectedClient}
-              onChange={(e) => onClientChange(e.target.value)}
-            >
-              <option value="">Tutti i Clienti (Vista Completa)</option>
-              {clients.map((client) => (
-                <option key={client} value={client}>
-                  {client}
-                </option>
-              ))}
-            </select>
-          </div>
-          {selectedClient && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={onResetFilter}
-            >
-              Azzera Filtro
-            </button>
-          )}
         </div>
       </div>
-    </section>
+      <div className="toolbar">
+        <div className="toolbar-left">
+          <select aria-label="Filtra per cliente" value={cliente} onChange={(e) => onChange(e.target.value)}>
+            <option value="">Tutti i clienti</option>
+            {clienti.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          {cliente && <button type="button" className="link" onClick={() => onChange('')}>Rimuovi filtro</button>}
+          <span className="muted">{totale} ticket</span>
+        </div>
+      </div>
+    </>
   );
 }

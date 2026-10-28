@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "nome": "Marco Rinaldi",
+    "specializzazione": "DevOps e infrastruttura"
+  },
+  {
+    "id": 2,
+    "nome": "Giulia Ferri",
+    "specializzazione": "Sicurezza informatica"
+  },
+  {
+    "id": 3,
+    "nome": "Luca Moretti",
+    "specializzazione": "Sviluppo backend"
+  },
+  {
+    "id": 4,
+    "nome": "Sara Conti",
+    "specializzazione": "Sviluppo frontend"
+  },
+  {
+    "id": 5,
+    "nome": "Elena Greco",
+    "specializzazione": "Quality assurance"
+  },
+  {
+    "id": 6,
+    "nome": "Paolo Villa",
+    "specializzazione": "Database e integrazioni"
+  },
+  {
+    "id": 7,
+    "nome": "Riccardo Leccia",
+    "specializzazione": "Full stack developer and AI specialist"
+  },
+  {
+    "id": 8,
+    "nome": "Stefano Felicini",
+    "specializzazione": "Full stack developer and AI specialist"
+  }
+]
